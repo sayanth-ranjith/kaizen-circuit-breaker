@@ -10,7 +10,7 @@ package com.sayanth.ranjith.kaizen_circuit_breaker.core.type;
  *
  * @author Sayanth P V
  */
-public enum CircuitStateType {
+public enum KaizenCircuitStateType {
     CLOSED,
     HALF_OPEN,
     OPEN

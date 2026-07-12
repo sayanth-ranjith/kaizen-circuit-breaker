@@ -70,6 +70,7 @@ has behaved over a recent time period, even if traffic is bursty or sparse.
   sample size.
 - Use `TIME_BASED` when traffic varies a lot and you want health decisions tied to
   a recent time interval.
+- Implement both and understand them.
 
 ## In Short
 

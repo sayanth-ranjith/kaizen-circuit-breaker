@@ -1,5 +1,6 @@
 package com.sayanth.ranjith.kaizen_circuit_breaker;
 
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -13,6 +14,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author Sayanth P V
  */
 @SpringBootApplication
+@ConfigurationPropertiesScan
 public class KaizenCircuitBreakerApplication {
 
 	/**

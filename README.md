@@ -1,5 +1,78 @@
 # kaizen-circuit-breaker
 
+## Design Rationale
+
+The configuration layer uses a split between raw bound properties and immutable
+runtime config objects:
+
+- `KaizenProperties` binds external configuration from Spring.
+- `KaizenConfig` is the validated runtime value object.
+- `KaizenConfigRegistry` resolves configs by name at runtime.
+- `DefaultKaizenConfigRegistry` builds an immutable lookup map once at startup.
+
+This is a registry pattern, not a direct "properties as factory" approach. I chose
+it because it keeps responsibilities separate and keeps the runtime code simple:
+
+- Configuration binding stays focused on reading YAML or properties.
+- Validation stays close to the domain rules in `KaizenConfig`.
+- Lookup is O(1) and does not require scanning or reconstructing objects.
+- Adding or removing a breaker is data-only, so no Java code change is needed.
+
+## Why This Is Cleaner
+
+The previous shape mixed binding, validation, and conversion in one place. That
+creates avoidable coupling and makes the code harder to evolve. The current
+design follows the intent of SOLID:
+
+- Single Responsibility: each class has one job.
+- Open/Closed: new breaker definitions are added in config, not code.
+- Liskov Substitution: `KaizenConfigRegistry` can be replaced with another
+  implementation later, such as a remote or dynamic registry.
+- Interface Segregation: consumers only depend on `get(name)` and `getAll()`.
+- Dependency Inversion: application code depends on the registry abstraction,
+  not on the concrete map-building logic.
+
+This also improves failure behavior:
+
+- Invalid numeric ranges fail fast.
+- Duplicate breaker names fail fast.
+- Missing named configs fail fast with `KaizenConfigException`.
+
+## What We Build Next
+
+The next useful pieces in Kaizen should be:
+
+1. A circuit breaker engine that uses `KaizenConfig` and records outcomes.
+2. A state machine for `CLOSED`, `OPEN`, and `HALF_OPEN`.
+3. Sliding-window storage and failure-rate calculation.
+4. An execution wrapper or annotation-based API for protecting calls.
+5. Metrics and logging so breaker transitions are observable.
+
+That sequence keeps the system layered:
+
+- config and validation first,
+- breaker state transitions second,
+- request interception third,
+- observability last.
+
+## Current Model
+
+Configuration is currently expressed as a list of named breakers. Example:
+
+```yaml
+kaizen:
+  circuit-breakers:
+    - name: inventory
+      failure-rate-threshold: 60
+      minimum-number-of-calls: 10
+      sliding-window-size: 20
+      sliding-window-type: COUNT_BASED
+      wait-duration-in-open-state: 30s
+      permitted-calls-in-half-open-state: 5
+```
+
+This keeps the config format easy to extend and keeps runtime resolution stable.
+
 ## Sliding Window
 
 This project uses a sliding window to evaluate recent traffic instead of looking at

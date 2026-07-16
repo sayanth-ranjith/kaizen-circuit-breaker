@@ -1,5 +1,6 @@
 package com.sayanth.ranjith.kaizen_circuit_breaker.core.config;
 
+import com.sayanth.ranjith.kaizen_circuit_breaker.exception.KaizenConfigurationException;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -23,7 +24,7 @@ public class DefaultKaizenConfigRegistry implements KaizenConfigRegistry {
     public KaizenConfig get(String name) {
         KaizenConfig config = configs.get(name);
         if (config == null) {
-            throw new KaizenConfigException("No Kaizen config found for '" + name + "'");
+            throw new KaizenConfigurationException("No Kaizen config found for '" + name + "'");
         }
         return config;
     }
@@ -37,13 +38,13 @@ public class DefaultKaizenConfigRegistry implements KaizenConfigRegistry {
         Map<String, KaizenConfig> resolved = new LinkedHashMap<>();
         for (KaizenProperties.Breaker breaker : breakers) {
             if (breaker == null) {
-                throw new KaizenConfigException("circuitBreakers must not contain null entries");
+                throw new KaizenConfigurationException("circuitBreakers must not contain null entries");
             }
             String name = normalizeName(breaker.getName());
             KaizenConfig config = KaizenConfig.from(breaker);
             KaizenConfig previous = resolved.putIfAbsent(name, config);
             if (previous != null) {
-                throw new KaizenConfigException("Duplicate Kaizen config name '" + name + "'");
+                throw new KaizenConfigurationException("Duplicate Kaizen config name '" + name + "'");
             }
         }
         return Map.copyOf(resolved);
@@ -52,7 +53,7 @@ public class DefaultKaizenConfigRegistry implements KaizenConfigRegistry {
     private static String normalizeName(String name) {
         String trimmed = Objects.requireNonNull(name, "name").trim();
         if (trimmed.isEmpty()) {
-            throw new KaizenConfigException("Breaker name must not be blank");
+            throw new KaizenConfigurationException("Breaker name must not be blank");
         }
         return trimmed;
     }

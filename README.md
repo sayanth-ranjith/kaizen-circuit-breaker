@@ -73,6 +73,60 @@ kaizen:
 
 This keeps the config format easy to extend and keeps runtime resolution stable.
 
+## How An End User Uses It
+
+The user does two things:
+
+1. Define one or more breaker profiles in YAML.
+2. Put `@KaizenCircuitBreaker("breakerName")` on the Spring bean method that should
+   be protected.
+
+Example service:
+
+```java
+import com.sayanth.ranjith.kaizen_circuit_breaker.core.annotation.KaizenCircuitBreaker;
+import org.springframework.stereotype.Service;
+
+@Service
+public class PaymentService {
+
+    @KaizenCircuitBreaker("payment")
+    public String charge() {
+        return "charged";
+    }
+}
+```
+
+What happens at runtime:
+
+- Spring binds the YAML into `KaizenProperties`.
+- The registry turns each entry into an immutable `KaizenConfig`.
+- The aspect intercepts `charge()`.
+- The engine checks the breaker state before the method runs.
+- If the breaker is `OPEN`, the call is rejected with `KaizenCircuitBreakerOpenException`.
+- If the breaker is `CLOSED` or `HALF_OPEN`, the method runs and the engine records the result.
+
+### Demo Endpoints
+
+The sample app includes endpoints you can call while debugging:
+
+- `GET /demo/payment/charge?fail=false` runs a successful call.
+- `GET /demo/payment/charge?fail=true` simulates a downstream failure.
+- `GET /demo/payment/state` shows the breaker state and recent window stats.
+
+Debug flow:
+
+1. Call `charge?fail=false`.
+2. Call `charge?fail=true`.
+3. Call `state` and inspect the breaker state.
+4. Call `charge` again and see whether the breaker blocks the call.
+
+Important note:
+
+- This works on Spring-managed beans.
+- Self-invocation inside the same class will bypass the proxy, which is normal for
+  proxy-based AOP.
+
 ## Sliding Window
 
 This project uses a sliding window to evaluate recent traffic instead of looking at

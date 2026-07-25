@@ -1,5 +1,7 @@
 # kaizen-circuit-breaker
 
+> ⚠️ **Note:** Kaizen is not yet published to Maven. It cannot be used as a dependency until it is released.
+
 ## Design Rationale
 
 The configuration layer uses a split between raw bound properties and immutable
